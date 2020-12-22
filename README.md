@@ -2,7 +2,7 @@
 
 One-time notes. No web gui, only api. No json, one endpoint. 
 Use POST form to set note and GET query to get it. Sqlite3 for backend.
-Key derivation via Argon2id, note encryption with AES-GSM.
+Key derivation via Argon2id, note encryption with AES-GCM.
 
 ## Schema
 
