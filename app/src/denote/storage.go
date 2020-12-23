@@ -45,7 +45,7 @@ func (d *database) create() (err error) {
 			"data" BLOB NOT NULL,
 			"view_count" INT NOT NULL DEFAULT 0,
 			"view_limit" INT NOT NULL DEFAULT 1,
-			"dt_limit" NUMERIC NOT NULL
+			"dt_limit" DATETIME NOT NULL
 		)
 	`)
 	if err != nil {
@@ -170,7 +170,7 @@ func (d *database) set(
 		uid,
 		data,
 		viewLimit,
-		time.Now().Add(durationLimit),
+		time.Now().Add(durationLimit).UTC(),
 	); err != nil {
 		return uuid.Nil, err
 	}

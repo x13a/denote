@@ -1,8 +1,7 @@
 # denote
 
-One-time notes. No web gui, only api. No json, one endpoint. 
-Use POST form to set note and GET query to get it. Sqlite3 for backend.
-Key derivation via Argon2id, note encryption with AES-GCM.
+One-time notes. Use POST form to set note and GET query to get it. 
+Sqlite3 for backend. Key derivation via Argon2id, note encryption with AES-GCM.
 
 ## Schema
 
@@ -11,10 +10,6 @@ POST form:
 - password (optional)
 - view_limit (default: 1)
 - duration_limit (default: 24h, min: 1m)
-
-GET query:
-- key
-- password (optional)
 
 ## Installation
 ```sh

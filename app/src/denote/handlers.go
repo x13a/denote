@@ -1,9 +1,9 @@
 package denote
 
 import (
+	"encoding/base64"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -14,21 +14,19 @@ const (
 
 	MinDurationLimit     = 1 * time.Minute
 	DefaultDurationLimit = 24 * time.Hour
+
+	keyLen = 1 << 4
 )
 
 func getHandler(c *Config, w http.ResponseWriter, r *http.Request) {
-	query := r.URL.Query()
-	key := query.Get("key")
-	if len(key) != 1<<5 {
+	q, err := base64.RawURLEncoding.DecodeString(r.URL.Query().Get("q"))
+	if err != nil || len(q) < keyLen {
 		writeErrorStatus(w, http.StatusNotFound)
 		return
 	}
-	uid, err := uuid.Parse(key)
-	if err != nil {
-		writeErrorStatus(w, http.StatusNotFound)
-		return
-	}
-	if uid.Version() != 1<<2 {
+	key, password := q[:keyLen], q[keyLen:]
+	uid, err := uuid.FromBytes(key)
+	if err != nil || uid.Version() != 1<<2 {
 		writeErrorStatus(w, http.StatusNotFound)
 		return
 	}
@@ -37,11 +35,10 @@ func getHandler(c *Config, w http.ResponseWriter, r *http.Request) {
 		writeErrorStatus(w, http.StatusNotFound)
 		return
 	}
-	password := query.Get("password")
-	if password == "" {
-		password = c.Password
+	if len(password) == 0 {
+		password = []byte(c.Password)
 	}
-	value, err := decrypt([]byte(password), data)
+	value, err := decrypt(password, data)
 	if err != nil {
 		writeErrorStatus(w, http.StatusNotFound)
 		return
@@ -85,11 +82,13 @@ func setHandler(c *Config, w http.ResponseWriter, r *http.Request) {
 		writeErrorStatus(w, http.StatusNotFound)
 		return
 	}
-	res := c.Origin + "?key=" + strings.ReplaceAll(uid.String(), "-", "")
+	w.Write([]byte(c.Origin + "?q="))
+	encoder := base64.NewEncoder(base64.RawURLEncoding, w)
+	encoder.Write(uid[:])
 	if !isEmptyPassword {
-		res += "&password=" + password
+		encoder.Write([]byte(password))
 	}
-	w.Write([]byte(res))
+	encoder.Close()
 }
 
 func makeRootHandleFunc(c *Config) http.HandlerFunc {
