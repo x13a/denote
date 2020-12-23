@@ -115,21 +115,16 @@ func (d *database) get(uid uuid.UUID) (data []byte, err error) {
 		}
 		err = tx.Commit()
 	}()
-	stmt, err := tx.Prepare(`
+	var viewCount int
+	var viewLimit int
+	if err = tx.QueryRow(`
 		SELECT "data", "view_count", "view_limit" 
 		FROM "denote" 
 		WHERE 
 			"key" = ?
 			AND
 			datetime('now') < "dt_limit"
-	`)
-	if err != nil {
-		return
-	}
-	defer stmt.Close()
-	var viewCount int
-	var viewLimit int
-	if err = stmt.QueryRow(uid).Scan(
+	`, uid).Scan(
 		&data,
 		&viewCount,
 		&viewLimit,
