@@ -20,7 +20,7 @@ const (
 	EnvDsn            = "DSN"
 	EnvRunCleanerTask = "RUN_CLEANER_TASK"
 	EnvPath           = "ROOT_PATH"
-	EnvOrigin         = "ORIGIN"
+	EnvURLOrigin      = "URL_ORIGIN"
 	EnvPassword       = "PASSWORD"
 
 	DefaultAddr           = "127.0.0.1:8000"
@@ -99,7 +99,7 @@ type Config struct {
 	Dsn            string
 	RunCleanerTask Bool
 	Path           string
-	Origin         string
+	URLOrigin      string
 	Password       string
 }
 
@@ -116,9 +116,9 @@ func (c *Config) Parse() error {
 	os.Unsetenv(EnvDsn)
 	c.RunCleanerTask.SetDefault(EnvRunCleanerTask, DefaultRunCleanerTask)
 	c.Path = getEnv(EnvPath, DefaultPath)
-	c.Origin = os.Getenv(EnvOrigin)
-	if c.Origin == "" {
-		return &ConfigError{EnvOrigin}
+	c.URLOrigin = os.Getenv(EnvURLOrigin)
+	if c.URLOrigin == "" {
+		return &ConfigError{EnvURLOrigin}
 	}
 	c.Password = os.Getenv(EnvPassword)
 	if len(c.Password) < MinPasswordLen {

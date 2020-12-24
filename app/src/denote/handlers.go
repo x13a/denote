@@ -26,7 +26,7 @@ func getHandler(c *Config, w http.ResponseWriter, r *http.Request) {
 	}
 	key, password := q[:keyLen], q[keyLen:]
 	uid, err := uuid.FromBytes(key)
-	if err != nil || uid.Version() != 1<<2 {
+	if err != nil || uid.Version() != 4 {
 		writeErrorStatus(w, http.StatusNotFound)
 		return
 	}
@@ -82,7 +82,7 @@ func setHandler(c *Config, w http.ResponseWriter, r *http.Request) {
 		writeErrorStatus(w, http.StatusNotFound)
 		return
 	}
-	w.Write([]byte(c.Origin + "?q="))
+	w.Write([]byte(c.URLOrigin + "?q="))
 	encoder := base64.NewEncoder(base64.RawURLEncoding, w)
 	encoder.Write(uid[:])
 	if !isEmptyPassword {
@@ -93,11 +93,12 @@ func setHandler(c *Config, w http.ResponseWriter, r *http.Request) {
 
 func makeRootHandleFunc(c *Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodGet {
+		switch r.Method {
+		case http.MethodGet:
 			getHandler(c, w, r)
-		} else if r.Method == http.MethodPost {
+		case http.MethodPost:
 			setHandler(c, w, r)
-		} else {
+		default:
 			writeErrorStatus(w, http.StatusNotFound)
 		}
 	}

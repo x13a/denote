@@ -32,7 +32,7 @@ Usage of denote:
 
 To run localhost:
 ```sh
-$  ORIGIN="http://127.0.0.1:8000" PASSWORD="qwertyuiopasdfgh" denote
+$  URL_ORIGIN="http://127.0.0.1:8000" PASSWORD="qwertyuiopasdfgh" denote
 ```
 
 To run in docker:
