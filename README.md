@@ -25,7 +25,6 @@ $ make docker
 ```text
 Usage of denote:
   -V	Print version and exit
-  -h	Print help and exit
 ```
 
 ## Example

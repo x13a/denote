@@ -24,13 +24,13 @@ func getHandler(c *Config, w http.ResponseWriter, r *http.Request) {
 		writeErrorStatus(w, http.StatusNotFound)
 		return
 	}
-	key, password := q[:keyLen], q[keyLen:]
-	uid, err := uuid.FromBytes(key)
-	if err != nil || uid.Version() != 4 {
+	uid, password := q[:keyLen], q[keyLen:]
+	key, err := uuid.FromBytes(uid)
+	if err != nil || key.Version() != 4 {
 		writeErrorStatus(w, http.StatusNotFound)
 		return
 	}
-	data, err := db.get(uid)
+	data, err := db.get(key)
 	if err != nil {
 		writeErrorStatus(w, http.StatusNotFound)
 		return
@@ -77,14 +77,14 @@ func setHandler(c *Config, w http.ResponseWriter, r *http.Request) {
 		writeErrorStatus(w, http.StatusNotFound)
 		return
 	}
-	uid, err := db.set(data, viewLimit, durationLimit)
+	key, err := db.set(data, viewLimit, durationLimit)
 	if err != nil {
 		writeErrorStatus(w, http.StatusNotFound)
 		return
 	}
-	w.Write([]byte(c.URLOrigin + "?q="))
+	w.Write([]byte(c.url + "?q="))
 	encoder := base64.NewEncoder(base64.RawURLEncoding, w)
-	encoder.Write(uid[:])
+	encoder.Write(key[:])
 	if !isEmptyPassword {
 		encoder.Write([]byte(password))
 	}

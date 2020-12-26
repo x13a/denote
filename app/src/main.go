@@ -22,19 +22,14 @@ type Opts struct {
 
 func getOpts() *Opts {
 	opts := &Opts{}
-	isHelp := flag.Bool("h", false, "Print help and exit")
 	isVersion := flag.Bool("V", false, "Print version and exit")
 	flag.Parse()
-	if *isHelp {
-		flag.Usage()
-		os.Exit(ExitSuccess)
-	}
 	if *isVersion {
 		fmt.Println(denote.Version)
 		os.Exit(ExitSuccess)
 	}
 	if err := opts.config.Parse(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		fmt.Fprintln(flag.CommandLine.Output(), err)
 		os.Exit(ExitUsage)
 	}
 	return opts

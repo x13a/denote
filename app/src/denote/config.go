@@ -1,8 +1,10 @@
 package denote
 
 import (
+	"net/url"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -101,6 +103,8 @@ type Config struct {
 	Path           string
 	URLOrigin      string
 	Password       string
+
+	url string
 }
 
 func (c *Config) Parse() error {
@@ -116,10 +120,27 @@ func (c *Config) Parse() error {
 	os.Unsetenv(EnvDsn)
 	c.RunCleanerTask.SetDefault(EnvRunCleanerTask, DefaultRunCleanerTask)
 	c.Path = getEnv(EnvPath, DefaultPath)
+	if !strings.HasPrefix(c.Path, "/") {
+		c.Path = "/" + c.Path
+	}
+	reference, err := url.Parse(c.Path)
+	if err != nil {
+		return err
+	}
 	c.URLOrigin = os.Getenv(EnvURLOrigin)
 	if c.URLOrigin == "" {
 		return &ConfigError{EnvURLOrigin}
 	}
+	base, err := url.ParseRequestURI(c.URLOrigin)
+	if err != nil {
+		return err
+	}
+	if (base.Scheme != "http" && base.Scheme != "https") ||
+		base.Hostname() == "" {
+
+		return &ConfigError{EnvURLOrigin}
+	}
+	c.url = base.ResolveReference(reference).String()
 	c.Password = os.Getenv(EnvPassword)
 	if len(c.Password) < MinPasswordLen {
 		return &ConfigError{EnvPassword}

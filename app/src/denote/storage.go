@@ -59,13 +59,6 @@ func (d *database) create() (err error) {
 		return
 	}
 	_, err = tx.Exec(`
-		CREATE INDEX IF NOT EXISTS "view_count_limit_index"
-		ON "denote" ("view_count", "view_limit")
-	`)
-	if err != nil {
-		return
-	}
-	_, err = tx.Exec(`
 		CREATE INDEX IF NOT EXISTS "dt_limit_index" 
 		ON "denote" ("dt_limit")
 	`)
@@ -93,15 +86,12 @@ func (d *database) clean() (err error) {
 	_, err = d.db.Exec(`
 		DELETE 
 		FROM "denote" 
-		WHERE 
-			"view_count" >= "view_limit"
-			OR
-			datetime('now') >= "dt_limit"
+		WHERE datetime('now') >= "dt_limit"
 	`)
 	return
 }
 
-func (d *database) get(uid uuid.UUID) (data []byte, err error) {
+func (d *database) get(key uuid.UUID) (data []byte, err error) {
 	d.Lock()
 	defer d.Unlock()
 	tx, err := d.db.Begin()
@@ -124,7 +114,7 @@ func (d *database) get(uid uuid.UUID) (data []byte, err error) {
 			"key" = ?
 			AND
 			datetime('now') < "dt_limit"
-	`, uid).Scan(
+	`, key).Scan(
 		&data,
 		&viewCount,
 		&viewLimit,
@@ -136,10 +126,10 @@ func (d *database) get(uid uuid.UUID) (data []byte, err error) {
 		_, err = tx.Exec(
 			`UPDATE "denote" SET "view_count" = ? WHERE "key" = ?`,
 			viewCount,
-			uid,
+			key,
 		)
 	} else {
-		_, err = tx.Exec(`DELETE FROM "denote" WHERE "key" = ?`, uid)
+		_, err = tx.Exec(`DELETE FROM "denote" WHERE "key" = ?`, key)
 	}
 	return
 }
@@ -149,7 +139,7 @@ func (d *database) set(
 	viewLimit int,
 	durationLimit time.Duration,
 ) (uuid.UUID, error) {
-	uid, err := uuid.NewRandom()
+	key, err := uuid.NewRandom()
 	if err != nil {
 		return uuid.Nil, err
 	}
@@ -162,12 +152,12 @@ func (d *database) set(
 			"view_limit", 
 			"dt_limit"
 		) VALUES (?, ?, ?, ?)`,
-		uid,
+		key,
 		data,
 		viewLimit,
 		time.Now().Add(durationLimit).UTC(),
 	); err != nil {
 		return uuid.Nil, err
 	}
-	return uid, nil
+	return key, nil
 }
