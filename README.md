@@ -32,7 +32,7 @@ Usage of denote:
 
 To run localhost:
 ```sh
-$ URL="http://127.0.0.1:8000" denote
+$ URL="http://127.0.0.1:8000" IP_LIMIT=0 denote
 ```
 
 To run in docker:
