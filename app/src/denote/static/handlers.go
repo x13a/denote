@@ -27,8 +27,7 @@ func get(w http.ResponseWriter, r *http.Request, c *config.Config) {
 		name := r.URL.Path[len(c.Path):]
 		switch name {
 		case "":
-			header := w.Header()
-			header.Set("X-Robots-Tag", "nofollow, noarchive, notranslate")
+			w.Header().Set("X-Robots-Tag", "nofollow, noarchive, notranslate")
 			serveTemplate(w, r, "", nil)
 		case "security.txt", "robots.txt":
 			w.Header().Set("Content-Type", "text/plain; charset=UTF-8")
