@@ -17,7 +17,7 @@ USER nobody:nogroup
 STOPSIGNAL SIGINT
 
 # ENV HEALTHCHECK_ENABLED 1
-# HEALTHCHECK CMD curl -f http://localhost:8000/ping || exit 1
+# HEALTHCHECK CMD healthy http://127.0.0.1:8000/ping || exit 1
 
 ENTRYPOINT ["/main"]
 EXPOSE 8000

@@ -3,41 +3,72 @@ package denote
 import (
 	"context"
 	"net/http"
+	"time"
 
+	"bitbucket.org/x31a/denote/app/src/denote/api"
+	"bitbucket.org/x31a/denote/app/src/denote/config"
+	"bitbucket.org/x31a/denote/app/src/denote/middleware"
+	"bitbucket.org/x31a/denote/app/src/denote/static"
 	"bitbucket.org/x31a/denote/app/src/healthcheck"
 )
 
 const (
-	Version = "0.2.2"
+	Version = "0.2.3"
 
-	MaxHeaderBytes = 1 << 10
+	cleanerInterval = 24 * time.Hour
+	maxHeaderBytes  = 1 << 10
 )
 
-func addHandlers(m *http.ServeMux, c *Config) {
-	m.HandleFunc(c.Path, makeRootHandleFunc(c))
+func addHandlers(m *http.ServeMux, c *config.Config) {
+	if c.EnableStatic {
+		m.HandleFunc(c.StaticPath, static.MakeStaticHandlerFunc(c))
+		m.HandleFunc(c.Path, static.MakeRootHandlerFunc(c))
+	} else {
+		m.HandleFunc(c.Path, api.MakeHandlerFunc(c))
+	}
 	healthcheck.AddHandler(m)
 }
 
-func Run(ctx context.Context, c Config) (err error) {
-	if err = db.open(c.Dsn); err != nil {
+func runCleaners(
+	ctx context.Context,
+	c *config.Config,
+	stopChan chan struct{},
+) {
+	n := 2
+	stopChan1 := make(chan struct{})
+	go api.DB.Cleaner(ctx, cleanerInterval, stopChan1)
+	go api.DeleteLimiter.Cleaner(cleanerInterval, stopChan1)
+	api.SetLimiter.SetLimit(c.IPLimit)
+	if api.SetLimiter.IsActive() {
+		n++
+		go api.SetLimiter.Cleaner(cleanerInterval, stopChan1)
+	}
+	<-stopChan
+	for i := 0; i < n; i++ {
+		stopChan1 <- struct{}{}
+		<-stopChan1
+	}
+	close(stopChan)
+}
+
+func Run(ctx context.Context, c config.Config) (err error) {
+	if err = api.DB.Open(c.DSN); err != nil {
 		return
 	}
 	defer func() {
-		if err1 := db.close(); err == nil || err == http.ErrServerClosed {
+		if err1 := api.DB.Close(); err == nil || err == http.ErrServerClosed {
 			err = err1
 		}
 	}()
-	if err = db.create(); err != nil {
+	if err = api.DB.Create(ctx); err != nil {
 		return
 	}
-	if c.RunCleanerTask {
-		stopChan := make(chan struct{}, 1)
-		go db.cleaner(stopChan)
-		defer func() {
-			stopChan <- struct{}{}
-			<-stopChan
-		}()
-	}
+	stopChan := make(chan struct{})
+	go runCleaners(ctx, &c, stopChan)
+	defer func() {
+		stopChan <- struct{}{}
+		<-stopChan
+	}()
 	mux := http.NewServeMux()
 	addHandlers(mux, &c)
 	handlerTimeout := c.HandlerTimeout.Unwrap()
@@ -46,8 +77,12 @@ func Run(ctx context.Context, c Config) (err error) {
 		ReadTimeout:    c.ReadTimeout.Unwrap(),
 		WriteTimeout:   c.WriteTimeout.Unwrap(),
 		IdleTimeout:    c.IdleTimeout.Unwrap(),
-		MaxHeaderBytes: MaxHeaderBytes,
-		Handler:        http.TimeoutHandler(mux, handlerTimeout, ""),
+		MaxHeaderBytes: maxHeaderBytes,
+		Handler: http.TimeoutHandler(
+			middleware.Security(mux),
+			handlerTimeout,
+			"",
+		),
 	}
 	errChan := make(chan error, 1)
 	go func() {

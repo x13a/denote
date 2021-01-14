@@ -1,13 +1,14 @@
 # denote
 
-One-time notes. Use POST form to set note and GET query to get it. 
-Sqlite3 for backend. Key derivation via Argon2id, note encryption with AES-GCM.
+Self-destructive (one-time) notes.
+
+Use POST form to set note and GET query to get it. Sqlite3 for backend. Key 
+derivation via Argon2id, note encryption with AES-GCM.
 
 ## Schema
 
 POST form:
 - value
-- password (optional)
 - view_limit (default: 1)
 - duration_limit (default: 24h, min: 1m)
 
@@ -31,7 +32,7 @@ Usage of denote:
 
 To run localhost:
 ```sh
-$  URL_ORIGIN="http://127.0.0.1:8000" PASSWORD="qwertyuiopasdfgh" denote
+$ URL="http://127.0.0.1:8000" denote
 ```
 
 To run in docker:
@@ -39,5 +40,10 @@ To run in docker:
 $ docker-compose up -d
 ```
 
+## Caveats
+
+If you need frontend, setenv `ENABLE_STATIC=1`.
+
 ## Friends
 - [potemkin](https://github.com/Termina1/potemkin)
+- [shhh](https://github.com/smallwat3r/shhh)

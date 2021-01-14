@@ -1,9 +1,12 @@
 package healthcheck
 
 import (
+	"io"
 	"net/http"
 	"os"
 	"strconv"
+
+	"bitbucket.org/x31a/denote/app/src/denote/api"
 )
 
 const (
@@ -11,7 +14,7 @@ const (
 	EnvPath    = envPrefix + "PATH"
 	EnvEnabled = envPrefix + "ENABLED"
 
-	DefaultPath = "/ping"
+	DefaultPath = "/ping/"
 )
 
 func AddHandler(m *http.ServeMux) {
@@ -22,8 +25,14 @@ func AddHandler(m *http.ServeMux) {
 	path := os.Getenv(EnvPath)
 	if path == "" {
 		path = DefaultPath
+	} else if path[len(path)-1] != '/' {
+		path += "/"
 	}
 	m.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("OK"))
+		if err := api.DB.Ping(r.Context()); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		io.WriteString(w, "OK")
 	})
 }

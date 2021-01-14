@@ -9,6 +9,7 @@ import (
 	"os/signal"
 
 	"bitbucket.org/x31a/denote/app/src/denote"
+	"bitbucket.org/x31a/denote/app/src/denote/config"
 )
 
 const (
@@ -17,7 +18,7 @@ const (
 )
 
 type Opts struct {
-	config denote.Config
+	config config.Config
 }
 
 func getOpts() *Opts {
@@ -28,7 +29,7 @@ func getOpts() *Opts {
 		fmt.Println(denote.Version)
 		os.Exit(ExitSuccess)
 	}
-	if err := opts.config.Parse(); err != nil {
+	if err := opts.config.FromEnv(); err != nil {
 		fmt.Fprintln(flag.CommandLine.Output(), err)
 		os.Exit(ExitUsage)
 	}

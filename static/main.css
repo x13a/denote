@@ -1,0 +1,27 @@
+:root {
+    --base-color: azure;
+}
+
+body {
+    color: var(--base-color);
+    background-color: darkslategray;
+}
+
+#box {
+    padding: 5%;
+}
+
+#box textarea {
+    height: 20rem;
+}
+
+#box textarea,
+#box input,
+#result {
+    background-color: var(--base-color);
+}
+
+#result pre {
+    color: var(--bs-dark);
+    margin-bottom: 0;
+}
