@@ -88,7 +88,11 @@ func MakeStaticHandlerFunc(c *config.Config) http.HandlerFunc {
 			http.NotFound(w, r)
 			return
 		}
-		name := strings.Trim(r.URL.Path[len(c.StaticPath):], ".-_")
+		name := r.URL.Path[len(c.StaticPath):]
+		if name == "" || name != strings.Trim(name, ".") {
+			http.NotFound(w, r)
+			return
+		}
 		for _, c := range name {
 			if (c < 'a' || c > 'z') && (c < 'A' || c > 'Z') &&
 				!unicode.IsDigit(c) && !strings.ContainsRune(".-_", c) {
@@ -97,7 +101,7 @@ func MakeStaticHandlerFunc(c *config.Config) http.HandlerFunc {
 				return
 			}
 		}
-		if name == "" || strings.HasSuffix(name, ".html") ||
+		if strings.HasSuffix(name, ".html") ||
 			strings.HasSuffix(name, ".txt") {
 
 			http.NotFound(w, r)
