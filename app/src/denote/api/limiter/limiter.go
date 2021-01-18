@@ -11,15 +11,21 @@ import (
 	"bitbucket.org/x31a/denote/app/src/denote/api/limiter/ip"
 )
 
-func NewIPLimiter(limit int) *IPLimiter {
+const defaultInterval = 24 * time.Hour
+
+func NewIPLimiter(limit int, interval time.Duration) *IPLimiter {
 	salt, err := crypto.RandRead(sha256.Size)
 	if err != nil {
 		panic(err)
 	}
+	if interval == 0 {
+		interval = defaultInterval
+	}
 	return &IPLimiter{
-		m:     make(map[string]Value),
-		salt:  salt,
-		limit: limit,
+		m:        make(map[string]Value),
+		salt:     salt,
+		limit:    limit,
+		interval: interval,
 	}
 }
 
@@ -29,10 +35,11 @@ type Value struct {
 }
 
 type IPLimiter struct {
-	mu    sync.RWMutex
-	m     map[string]Value
-	limit int
-	salt  []byte
+	mu       sync.RWMutex
+	m        map[string]Value
+	limit    int
+	interval time.Duration
+	salt     []byte
 }
 
 func (l *IPLimiter) Allow(r *http.Request) (v bool) {
@@ -49,11 +56,23 @@ func (l *IPLimiter) Allow(r *http.Request) (v bool) {
 	hasher.Write(ip)
 	hash := fmt.Sprintf("%x", hasher.Sum(nil))
 	l.mu.Lock()
-	value, _ := l.m[hash]
+	value, ok := l.m[hash]
 	if value.count < l.limit {
 		v = true
+		value.count++
+		if !ok {
+			value.time = time.Now()
+		}
+		l.m[hash] = value
+	} else {
+		now := time.Now()
+		if value.time.Add(l.interval).Before(now) {
+			v = true
+			value.count = 1
+			value.time = now
+			l.m[hash] = value
+		}
 	}
-	l.m[hash] = Value{value.count + 1, time.Now()}
 	l.mu.Unlock()
 	return
 }
@@ -80,17 +99,17 @@ Loop:
 		case <-stopChan:
 			break Loop
 		case <-ticker.C:
-			l.Clean(interval)
+			l.Clean()
 		}
 	}
 	stopChan <- struct{}{}
 }
 
-func (l *IPLimiter) Clean(interval time.Duration) {
+func (l *IPLimiter) Clean() {
 	now := time.Now()
 	l.mu.Lock()
 	for k, v := range l.m {
-		if v.time.Add(interval).Before(now) {
+		if v.time.Add(l.interval).Before(now) {
 			delete(l.m, k)
 		}
 	}

@@ -26,8 +26,8 @@ const (
 
 var (
 	DB            = &storage.Database{}
-	SetLimiter    = limiter.NewIPLimiter(0)
-	DeleteLimiter = limiter.NewIPLimiter(5)
+	SetLimiter    = limiter.NewIPLimiter(0, 0)
+	DeleteLimiter = limiter.NewIPLimiter(0, 0)
 )
 
 func Get(
@@ -35,11 +35,11 @@ func Get(
 	r *http.Request,
 	c *config.Config,
 ) ([]byte, error) {
-	q := r.URL.Query().Get("q")
-	if q == "" {
+	get := r.URL.Query().Get("get")
+	if get == "" {
 		return nil, nil
 	}
-	value, err := base64.RawURLEncoding.DecodeString(q)
+	value, err := base64.RawURLEncoding.DecodeString(get)
 	if err != nil || len(value) != keyLen+crypto.PasswordLen {
 		return nil, err
 	}
@@ -129,7 +129,7 @@ func WriteGetURL(
 	key uuid.UUID,
 	password []byte,
 ) {
-	io.WriteString(w, c.URL+"?q=")
+	io.WriteString(w, c.URL+"?get=")
 	encoder := base64.NewEncoder(base64.RawURLEncoding, w)
 	encoder.Write(key[:])
 	encoder.Write(password)

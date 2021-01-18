@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	Version = "0.2.3"
+	Version = "0.2.4"
 
 	cleanerInterval = 24 * time.Hour
 	maxHeaderBytes  = 1 << 10
@@ -34,14 +34,18 @@ func runCleaners(
 	c *config.Config,
 	stopChan chan struct{},
 ) {
-	n := 2
+	n := 1
 	stopChan1 := make(chan struct{})
 	go api.DB.Cleaner(ctx, cleanerInterval, stopChan1)
-	go api.DeleteLimiter.Cleaner(cleanerInterval, stopChan1)
 	api.SetLimiter.SetLimit(c.IPLimit)
 	if api.SetLimiter.IsActive() {
 		n++
 		go api.SetLimiter.Cleaner(cleanerInterval, stopChan1)
+	}
+	api.DeleteLimiter.SetLimit(c.IPLimit)
+	if api.DeleteLimiter.IsActive() {
+		n++
+		go api.DeleteLimiter.Cleaner(cleanerInterval, stopChan1)
 	}
 	<-stopChan
 	for i := 0; i < n; i++ {

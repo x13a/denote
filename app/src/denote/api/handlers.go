@@ -12,8 +12,7 @@ import (
 
 func GetHandler(w http.ResponseWriter, r *http.Request, c *config.Config) {
 	if strings.Contains(r.URL.RawQuery, "rm=") {
-		err := Delete(w, r, c)
-		if err != nil {
+		if err := Delete(w, r, c); err != nil {
 			http.NotFound(w, r)
 		} else {
 			io.WriteString(w, "OK")

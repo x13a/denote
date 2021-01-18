@@ -10,7 +10,7 @@ derivation via Argon2id, note encryption with AES-GCM.
 POST form:
 - value
 - view_limit (default: 1)
-- duration_limit (default: 24h, min: 1m)
+- duration_limit (default: 24h, range: 1m..7*24h)
 
 ## Installation
 ```sh
@@ -32,7 +32,7 @@ Usage of denote:
 
 To run localhost:
 ```sh
-$ URL="http://127.0.0.1:8000" IP_LIMIT=0 denote
+$ URL="http://127.0.0.1:8000" denote
 ```
 
 To run in docker:

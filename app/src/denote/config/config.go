@@ -29,7 +29,6 @@ const (
 	DefaultHandlerTimeout = DefaultIdleTimeout
 
 	DefaultMaxBodyBytes = 1 << 12
-	DefaultIPLimit      = 1 << 3
 	DefaultDSN          = "file:./db/denote.db?mode=rwc"
 )
 
@@ -124,11 +123,7 @@ func (c *Config) FromEnv() error {
 		c.StaticPath = c.Path + "static/"
 	}
 
-	c.IPLimit, err = strconv.Atoi(os.Getenv(EnvIPLimit))
-	if err != nil {
-		c.IPLimit = DefaultIPLimit
-	}
-
+	c.IPLimit, _ = strconv.Atoi(os.Getenv(EnvIPLimit))
 	c.DSN = getEnv(EnvDSN, DefaultDSN)
 	os.Unsetenv(EnvDSN)
 	return nil

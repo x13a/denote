@@ -23,7 +23,7 @@ func get(w http.ResponseWriter, r *http.Request, c *config.Config) {
 		return
 	}
 	isDelete := strings.Contains(r.URL.RawQuery, "rm=")
-	if !strings.Contains(r.URL.RawQuery, "q=") && !isDelete {
+	if !strings.Contains(r.URL.RawQuery, "get=") && !isDelete {
 		name := r.URL.Path[len(c.Path):]
 		switch name {
 		case "":
