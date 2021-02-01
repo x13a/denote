@@ -10,8 +10,8 @@ import (
 	"github.com/x13a/denote/api"
 	"github.com/x13a/denote/api/db"
 	"github.com/x13a/denote/config"
-	"github.com/x13a/denote/healthcheck"
-	"github.com/x13a/denote/middleware"
+	"github.com/x13a/denote/denote/healthcheck"
+	"github.com/x13a/denote/denote/middleware"
 	"github.com/x13a/denote/static"
 )
 
