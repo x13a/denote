@@ -5,6 +5,8 @@ import (
 	"crypto/cipher"
 
 	"golang.org/x/crypto/argon2"
+
+	"github.com/x13a/denote/utils"
 )
 
 const (
@@ -20,7 +22,7 @@ const (
 func makeKey(password, salt []byte) ([]byte, []byte, error) {
 	if salt == nil {
 		var err error
-		if salt, err = RandRead(SaltLen); err != nil {
+		if salt, err = utils.RandRead(SaltLen); err != nil {
 			return nil, nil, err
 		}
 	}
@@ -47,7 +49,7 @@ func Encrypt(password, data []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	nonce, err := RandRead(gcm.NonceSize())
+	nonce, err := utils.RandRead(gcm.NonceSize())
 	if err != nil {
 		return nil, err
 	}

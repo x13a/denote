@@ -14,6 +14,7 @@ import (
 	"github.com/x13a/denote/api/crypto"
 	"github.com/x13a/denote/api/db"
 	"github.com/x13a/denote/config"
+	"github.com/x13a/denote/utils"
 )
 
 const (
@@ -67,7 +68,7 @@ func Set(w http.ResponseWriter, r *http.Request) (string, string, error) {
 	if value == "" {
 		return "", "", ErrEmptyValue
 	}
-	password, err := crypto.RandRead(crypto.PasswordLen)
+	password, err := utils.RandRead(crypto.PasswordLen)
 	if err != nil {
 		return "", "", err
 	}
