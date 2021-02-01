@@ -7,7 +7,8 @@ import (
 )
 
 const (
-	featurePolicy = "camera 'none'; " +
+	featurePolicy = "autoplay 'none'; " +
+		"camera 'none'; " +
 		"display-capture 'none'; " +
 		"document-domain 'none'; " +
 		"geolocation 'none'; " +

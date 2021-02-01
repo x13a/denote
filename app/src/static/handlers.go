@@ -15,13 +15,17 @@ import (
 
 var cache = filecache.New()
 
+type data struct {
+	Values []string
+}
+
 func Get(w http.ResponseWriter, r *http.Request) {
 	value, err := api.Get(w, r)
 	if err != nil {
 		http.NotFound(w, r)
 		return
 	}
-	serveTemplate(w, r, "", string(value))
+	serveTemplate(w, r, "", data{[]string{string(value)}})
 }
 
 func Set(w http.ResponseWriter, r *http.Request) {
@@ -30,11 +34,7 @@ func Set(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	var buffer strings.Builder
-	buffer.WriteString(getURL)
-	buffer.WriteString("\n")
-	buffer.WriteString(deleteURL)
-	serveTemplate(w, r, "", buffer.String())
+	serveTemplate(w, r, "", data{[]string{getURL, deleteURL}})
 }
 
 func Delete(w http.ResponseWriter, r *http.Request) {
@@ -42,7 +42,7 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	serveTemplate(w, r, "", "OK")
+	serveTemplate(w, r, "", data{[]string{"OK"}})
 }
 
 func Index(w http.ResponseWriter, r *http.Request) {

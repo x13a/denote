@@ -23,21 +23,23 @@ const (
 )
 
 func addHandlers(m *chi.Mux) {
-	m.Use(middleware.MakeSecurity())
-	apiPath := "/"
-	if config.EnableStatic {
-		apiPath += "api"
-		m.Get("/", static.Index)
-		m.Get("/{name}", static.Index)
-		m.Post("/", static.Set)
-		m.Get("/get/{key}", static.Get)
-		m.Get("/rm/{key}", static.Delete)
-		m.Get("/static/{name}", static.Static)
-	}
-	m.Route(apiPath, func(r chi.Router) {
-		r.Post("/", api.SetHandler)
-		r.Get("/get/{key}", api.GetHandler)
-		r.Get("/rm/{key}", api.DeleteHandler)
+	m.Group(func(r chi.Router) {
+		r.Use(middleware.MakeSecurity())
+		apiPath := "/"
+		if config.EnableStatic {
+			apiPath += "api"
+			r.Get("/", static.Index)
+			r.Get("/{name}", static.Index)
+			r.Post("/", static.Set)
+			r.Get("/get/{key}", static.Get)
+			r.Get("/rm/{key}", static.Delete)
+			r.Get("/static/{name}", static.Static)
+		}
+		r.Route(apiPath, func(r chi.Router) {
+			r.Post("/", api.SetHandler)
+			r.Get("/get/{key}", api.GetHandler)
+			r.Get("/rm/{key}", api.DeleteHandler)
+		})
 	})
 	healthcheck.AddHandler(m)
 }

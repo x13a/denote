@@ -17,9 +17,11 @@
     <div class="container">
       <div id="box">
         {{ if . }}
+        {{ range .Values }}
         <div id="result" class="alert" data-nosnippet>
           <pre>{{ . }}</pre>
         </div>
+        {{ end }}
         {{ else }}
         <form method="post">
           <div class="mb-3">
