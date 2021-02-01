@@ -78,7 +78,7 @@ type Error struct {
 }
 
 func (e *Error) Error() string {
-	return e.Key + " invalid"
+	return e.Key + " invalid value"
 }
 
 func (e *Error) Unwrap() error {
