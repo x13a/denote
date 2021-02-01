@@ -53,12 +53,9 @@ func Run(ctx context.Context) (err error) {
 			err = err1
 		}
 	}()
-	stopChan := make(chan struct{})
-	go db.Cleaner(ctx, cleanerInterval, stopChan)
-	defer func() {
-		stopChan <- struct{}{}
-		<-stopChan
-	}()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	go db.Cleaner(ctx, cleanerInterval)
 	router := chi.NewRouter()
 	addHandlers(router)
 	handlerTimeout := config.HandlerTimeout.Unwrap()

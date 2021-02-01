@@ -78,23 +78,18 @@ func Init(ctx context.Context) error {
 	return Create(ctx)
 }
 
-func Cleaner(
-	ctx context.Context,
-	interval time.Duration,
-	stopChan chan struct{},
-) {
+func Cleaner(ctx context.Context, interval time.Duration) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 Loop:
 	for {
 		select {
-		case <-stopChan:
+		case <-ctx.Done():
 			break Loop
 		case <-ticker.C:
 			Clean(ctx)
 		}
 	}
-	close(stopChan)
 }
 
 func Clean(ctx context.Context) (err error) {
