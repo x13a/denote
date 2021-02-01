@@ -56,8 +56,8 @@ func Run(ctx context.Context) (err error) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	go db.Cleaner(ctx, cleanerInterval)
-	router := chi.NewRouter()
-	addHandlers(router)
+	mux := chi.NewRouter()
+	addHandlers(mux)
 	handlerTimeout := config.HandlerTimeout.Unwrap()
 	srv := &http.Server{
 		Addr:           config.Addr,
@@ -65,7 +65,7 @@ func Run(ctx context.Context) (err error) {
 		WriteTimeout:   config.WriteTimeout.Unwrap(),
 		IdleTimeout:    config.IdleTimeout.Unwrap(),
 		MaxHeaderBytes: maxHeaderBytes,
-		Handler:        http.TimeoutHandler(router, handlerTimeout, ""),
+		Handler:        http.TimeoutHandler(mux, handlerTimeout, ""),
 	}
 	errChan := make(chan error, 1)
 	go func() {
