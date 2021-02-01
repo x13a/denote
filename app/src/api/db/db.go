@@ -14,10 +14,8 @@ import (
 var db *sql.DB
 
 func Open() (err error) {
-	defer func() {
-		config.DSN = ""
-	}()
 	db, err = sql.Open("sqlite3", config.DSN)
+	config.DSN = ""
 	if err != nil {
 		db.SetMaxOpenConns(1)
 	}
