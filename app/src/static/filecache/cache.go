@@ -1,4 +1,4 @@
-package cache
+package filecache
 
 import (
 	"io/ioutil"
@@ -6,43 +6,43 @@ import (
 	"time"
 )
 
-func NewFileCache() *FileCache {
-	return &FileCache{m: make(map[string]*Value)}
+func New() *cache {
+	return &cache{m: make(map[string]*value)}
 }
 
-type Value struct {
+type value struct {
 	Content []byte
 	Time    time.Time
 }
 
-type FileCache struct {
+type cache struct {
 	mu sync.RWMutex
-	m  map[string]*Value
+	m  map[string]*value
 }
 
-func (c *FileCache) Get(path string) *Value {
+func (c *cache) Get(path string) *value {
 	c.mu.RLock()
 	value, _ := c.m[path]
 	c.mu.RUnlock()
 	return value
 }
 
-func (c *FileCache) Set(path string, data []byte) *Value {
-	value := &Value{Content: data, Time: time.Now()}
+func (c *cache) Set(path string, data []byte) *value {
+	value := &value{Content: data, Time: time.Now()}
 	c.mu.Lock()
 	c.m[path] = value
 	c.mu.Unlock()
 	return value
 }
 
-func (c *FileCache) Has(path string) (ok bool) {
+func (c *cache) Has(path string) (ok bool) {
 	c.mu.RLock()
 	_, ok = c.m[path]
 	c.mu.RUnlock()
 	return
 }
 
-func (c *FileCache) From(path string) (*Value, error) {
+func (c *cache) From(path string) (*value, error) {
 	if value := c.Get(path); value != nil {
 		return value, nil
 	}

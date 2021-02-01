@@ -5,93 +5,73 @@ import (
 	"net/http"
 	"time"
 
-	"bitbucket.org/x31a/denote/app/src/denote/api"
-	"bitbucket.org/x31a/denote/app/src/denote/config"
-	"bitbucket.org/x31a/denote/app/src/denote/middleware"
-	"bitbucket.org/x31a/denote/app/src/denote/static"
-	"bitbucket.org/x31a/denote/app/src/healthcheck"
+	"github.com/go-chi/chi"
+
+	"github.com/x13a/denote/api"
+	"github.com/x13a/denote/api/db"
+	"github.com/x13a/denote/config"
+	"github.com/x13a/denote/healthcheck"
+	"github.com/x13a/denote/middleware"
+	"github.com/x13a/denote/static"
 )
 
 const (
-	Version = "0.2.5"
+	Version = "0.2.6"
 
 	cleanerInterval = 24 * time.Hour
 	maxHeaderBytes  = 1 << 10
 )
 
-func addHandlers(m *http.ServeMux, c *config.Config) {
-	if c.EnableStatic {
-		m.HandleFunc(c.StaticPath, static.MakeStaticHandlerFunc(c))
-		m.HandleFunc(c.Path, static.MakeRootHandlerFunc(c))
-	} else {
-		m.HandleFunc(c.Path, api.MakeHandlerFunc(c))
+func addHandlers(m *chi.Mux) {
+	m.Use(middleware.MakeSecurity())
+	apiPath := "/"
+	if config.EnableStatic {
+		apiPath += "api"
+		m.Get("/", static.Index)
+		m.Get("/{name}", static.Index)
+		m.Post("/", static.Set)
+		m.Get("/get/{key}", static.Get)
+		m.Get("/rm/{key}", static.Delete)
+		m.Get("/static/{name}", static.Static)
 	}
+	m.Route(apiPath, func(r chi.Router) {
+		r.Post("/", api.SetHandler)
+		r.Get("/get/{key}", api.GetHandler)
+		r.Get("/rm/{key}", api.DeleteHandler)
+	})
 	healthcheck.AddHandler(m)
 }
 
-func runCleaners(
-	ctx context.Context,
-	c *config.Config,
-	stopChan chan struct{},
-) {
-	n := 1
-	stopChan1 := make(chan struct{})
-	go api.DB.Cleaner(ctx, cleanerInterval, stopChan1)
-	api.SetLimiter.SetLimit(c.IPLimit)
-	if api.SetLimiter.IsActive() {
-		n++
-		go api.SetLimiter.Cleaner(cleanerInterval, stopChan1)
-	}
-	api.DeleteLimiter.SetLimit(c.IPLimit)
-	if api.DeleteLimiter.IsActive() {
-		n++
-		go api.DeleteLimiter.Cleaner(cleanerInterval, stopChan1)
-	}
-	<-stopChan
-	for i := 0; i < n; i++ {
-		stopChan1 <- struct{}{}
-		<-stopChan1
-	}
-	close(stopChan)
-}
-
-func Run(ctx context.Context, c config.Config) (err error) {
-	if err = api.DB.Open(c.DSN); err != nil {
+func Run(ctx context.Context) (err error) {
+	if err = db.Init(ctx); err != nil {
 		return
 	}
 	defer func() {
-		if err1 := api.DB.Close(); err == nil || err == http.ErrServerClosed {
+		if err1 := db.Close(); err == nil || err == http.ErrServerClosed {
 			err = err1
 		}
 	}()
-	if err = api.DB.Create(ctx); err != nil {
-		return
-	}
 	stopChan := make(chan struct{})
-	go runCleaners(ctx, &c, stopChan)
+	go db.Cleaner(ctx, cleanerInterval, stopChan)
 	defer func() {
 		stopChan <- struct{}{}
 		<-stopChan
 	}()
-	mux := http.NewServeMux()
-	addHandlers(mux, &c)
-	handlerTimeout := c.HandlerTimeout.Unwrap()
+	router := chi.NewRouter()
+	addHandlers(router)
+	handlerTimeout := config.HandlerTimeout.Unwrap()
 	srv := &http.Server{
-		Addr:           c.Addr,
-		ReadTimeout:    c.ReadTimeout.Unwrap(),
-		WriteTimeout:   c.WriteTimeout.Unwrap(),
-		IdleTimeout:    c.IdleTimeout.Unwrap(),
+		Addr:           config.Addr,
+		ReadTimeout:    config.ReadTimeout.Unwrap(),
+		WriteTimeout:   config.WriteTimeout.Unwrap(),
+		IdleTimeout:    config.IdleTimeout.Unwrap(),
 		MaxHeaderBytes: maxHeaderBytes,
-		Handler: http.TimeoutHandler(
-			middleware.Security(mux),
-			handlerTimeout,
-			"",
-		),
+		Handler:        http.TimeoutHandler(router, handlerTimeout, ""),
 	}
 	errChan := make(chan error, 1)
 	go func() {
-		if c.CertFile != "" && c.KeyFile != "" {
-			errChan <- srv.ListenAndServeTLS(c.CertFile, c.KeyFile)
+		if config.CertFile != "" && config.KeyFile != "" {
+			errChan <- srv.ListenAndServeTLS(config.CertFile, config.KeyFile)
 		} else {
 			errChan <- srv.ListenAndServe()
 		}

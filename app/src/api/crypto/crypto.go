@@ -3,7 +3,6 @@ package crypto
 import (
 	"crypto/aes"
 	"crypto/cipher"
-	"crypto/rand"
 
 	"golang.org/x/crypto/argon2"
 )
@@ -17,14 +16,6 @@ const (
 	SaltLen     = argonKeyLen
 	PasswordLen = 1 << 4
 )
-
-func RandRead(n int) ([]byte, error) {
-	res := make([]byte, n)
-	if _, err := rand.Read(res); err != nil {
-		return nil, err
-	}
-	return res, nil
-}
 
 func makeKey(password, salt []byte) ([]byte, []byte, error) {
 	if salt == nil {
@@ -56,8 +47,8 @@ func Encrypt(password, data []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	nonce := make([]byte, gcm.NonceSize())
-	if _, err = rand.Read(nonce); err != nil {
+	nonce, err := RandRead(gcm.NonceSize())
+	if err != nil {
 		return nil, err
 	}
 	res := gcm.Seal(nonce, nonce, data, nil)

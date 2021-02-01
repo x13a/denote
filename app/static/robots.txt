@@ -4,4 +4,6 @@ User-agent: AdsBot-Google-Mobile-Apps
 Disallow: /
 
 User-agent: *
-Disallow: /?*
+Disallow: /api/
+Disallow: /get/
+Disallow: /rm/

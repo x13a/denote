@@ -10,7 +10,7 @@ services:
       - '8000:8000'
     volumes:
       - './certs/:/certs/:ro'
-      - './static/:/static/:ro'
+      - './app/static/:/static/:ro'
       - './db/:/var/db/:rw'
     env_file:
       - ./config/denote.env

@@ -2,7 +2,7 @@
 
 Self-destructive (one-time) notes.
 
-Use POST form to set note and GET query to get it. Sqlite3 for backend. Key 
+Use POST form to set note and GET to get it. Sqlite3 for backend. Key 
 derivation via Argon2id, note encryption with AES-GCM.
 
 ## Schema
@@ -47,3 +47,4 @@ If you need frontend, setenv `ENABLE_STATIC=1`.
 ## Friends
 - [potemkin](https://github.com/Termina1/potemkin)
 - [shhh](https://github.com/smallwat3r/shhh)
+- [tornote](https://github.com/osminogin/tornote)

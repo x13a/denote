@@ -16,7 +16,7 @@ func serveTemplate(
 	if name == "" {
 		name = "index.html"
 	}
-	value, err := Cache.From(filepath.Join("static", name))
+	value, err := cache.From(filepath.Join("static", name))
 	if err != nil {
 		http.NotFound(w, r)
 		return
@@ -29,7 +29,7 @@ func serveTemplate(
 }
 
 func serveFile(w http.ResponseWriter, r *http.Request, name string) {
-	value, err := Cache.From(name)
+	value, err := cache.From(name)
 	if err != nil {
 		http.NotFound(w, r)
 		return

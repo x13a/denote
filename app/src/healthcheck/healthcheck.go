@@ -6,7 +6,9 @@ import (
 	"os"
 	"strconv"
 
-	"bitbucket.org/x31a/denote/app/src/denote/api"
+	"github.com/go-chi/chi"
+
+	"github.com/x13a/denote/api/db"
 )
 
 const (
@@ -14,10 +16,10 @@ const (
 	EnvPath    = envPrefix + "PATH"
 	EnvEnabled = envPrefix + "ENABLED"
 
-	DefaultPath = "/ping/"
+	DefaultPath = "/ping"
 )
 
-func AddHandler(m *http.ServeMux) {
+func AddHandler(m *chi.Mux) {
 	enabled, err := strconv.ParseBool(os.Getenv(EnvEnabled))
 	if err != nil || !enabled {
 		return
@@ -25,11 +27,9 @@ func AddHandler(m *http.ServeMux) {
 	path := os.Getenv(EnvPath)
 	if path == "" {
 		path = DefaultPath
-	} else if path[len(path)-1] != '/' {
-		path += "/"
 	}
-	m.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
-		if err := api.DB.Ping(r.Context()); err != nil {
+	m.Get(path, func(w http.ResponseWriter, r *http.Request) {
+		if err := db.Ping(r.Context()); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}

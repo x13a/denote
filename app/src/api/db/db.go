@@ -1,36 +1,35 @@
-package storage
+package db
 
 import (
 	"context"
 	"database/sql"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
 	_ "github.com/mattn/go-sqlite3"
+
+	"github.com/x13a/denote/config"
 )
 
-type Database struct {
-	mu sync.Mutex
-	db *sql.DB
-}
+var db *sql.DB
 
-func (d *Database) Open(dsn string) (err error) {
-	d.db, err = sql.Open("sqlite3", dsn)
+func Open() (err error) {
+	defer func() {
+		config.DSN = ""
+	}()
+	db, err = sql.Open("sqlite3", config.DSN)
 	if err != nil {
-		d.db.SetMaxOpenConns(1)
+		db.SetMaxOpenConns(1)
 	}
 	return
 }
 
-func (d *Database) Close() error {
-	return d.db.Close()
+func Close() error {
+	return db.Close()
 }
 
-func (d *Database) Create(ctx context.Context) (err error) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-	tx, err := d.db.BeginTx(ctx, nil)
+func Create(ctx context.Context) (err error) {
+	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return
 	}
@@ -72,7 +71,14 @@ func (d *Database) Create(ctx context.Context) (err error) {
 	return
 }
 
-func (d *Database) Cleaner(
+func Init(ctx context.Context) error {
+	if err := Open(); err != nil {
+		return err
+	}
+	return Create(ctx)
+}
+
+func Cleaner(
 	ctx context.Context,
 	interval time.Duration,
 	stopChan chan struct{},
@@ -85,34 +91,25 @@ Loop:
 		case <-stopChan:
 			break Loop
 		case <-ticker.C:
-			d.Clean(ctx)
+			Clean(ctx)
 		}
 	}
-	stopChan <- struct{}{}
+	close(stopChan)
 }
 
-func (d *Database) Clean(ctx context.Context) (err error) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-	_, err = d.db.ExecContext(ctx, `
+func Clean(ctx context.Context) (err error) {
+	_, err = db.ExecContext(ctx, `
 		DELETE FROM "denote" WHERE datetime('now') >= "dt_limit"
 	`)
 	return
 }
 
-func (d *Database) Ping(ctx context.Context) error {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-	return d.db.PingContext(ctx)
+func Ping(ctx context.Context) error {
+	return db.PingContext(ctx)
 }
 
-func (d *Database) Get(
-	ctx context.Context,
-	key uuid.UUID,
-) (data []byte, err error) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-	tx, err := d.db.BeginTx(ctx, nil)
+func Get(ctx context.Context, key uuid.UUID) (data []byte, err error) {
+	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return
 	}
@@ -152,7 +149,7 @@ func (d *Database) Get(
 	return
 }
 
-func (d *Database) Set(
+func Set(
 	ctx context.Context,
 	data []byte,
 	viewLimit int,
@@ -166,9 +163,7 @@ func (d *Database) Set(
 	if err != nil {
 		return uuid.Nil, uuid.Nil, err
 	}
-	d.mu.Lock()
-	defer d.mu.Unlock()
-	if _, err = d.db.ExecContext(ctx,
+	if _, err = db.ExecContext(ctx,
 		`INSERT INTO "denote" (
 			"key", 
 			"data", 
@@ -187,10 +182,8 @@ func (d *Database) Set(
 	return key, rmKey, nil
 }
 
-func (d *Database) Delete(ctx context.Context, rmKey uuid.UUID) (err error) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-	_, err = d.db.ExecContext(ctx, `
+func Delete(ctx context.Context, rmKey uuid.UUID) (err error) {
+	_, err = db.ExecContext(ctx, `
 		DELETE FROM "denote" WHERE "rm_key" = ?
 	`, rmKey)
 	return

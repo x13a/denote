@@ -1,11 +1,10 @@
 FROM golang
 
 WORKDIR /build/
-COPY ./app/src/ ./app/src/
-COPY ./go.mod ./go.sum ./
+COPY ./app/src/ ./
 RUN go mod download
 RUN go build -ldflags '-linkmode external -extldflags "-static"' \
-             -o ./main ./app/src/
+             -o ./main "."
 
 FROM scratch
 
