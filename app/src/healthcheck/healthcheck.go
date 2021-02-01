@@ -12,16 +12,16 @@ import (
 )
 
 const (
-	envPrefix  = "HEALTHCHECK_"
-	EnvPath    = envPrefix + "PATH"
-	EnvEnabled = envPrefix + "ENABLED"
+	envPrefix = "HEALTHCHECK_"
+	EnvPath   = envPrefix + "PATH"
+	EnvEnable = envPrefix + "ENABLE"
 
 	DefaultPath = "/ping"
 )
 
 func AddHandler(m *chi.Mux) {
-	enabled, err := strconv.ParseBool(os.Getenv(EnvEnabled))
-	if err != nil || !enabled {
+	enable, err := strconv.ParseBool(os.Getenv(EnvEnable))
+	if err != nil || !enable {
 		return
 	}
 	path := os.Getenv(EnvPath)
