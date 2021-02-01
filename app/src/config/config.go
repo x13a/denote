@@ -5,6 +5,8 @@ import (
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/x13a/denote/utils"
 )
 
 const (
@@ -95,7 +97,7 @@ func LoadEnv() error {
 	}
 	URL = uri.Scheme + "://" + uri.Host
 
-	Addr = getEnv(EnvAddr, DefaultAddr)
+	Addr = utils.Getenv(EnvAddr, DefaultAddr)
 	CertFile = os.Getenv(EnvCertFile)
 	KeyFile = os.Getenv(EnvKeyFile)
 	ReadTimeout.setDefault(EnvReadTimeout, DefaultReadTimeout)
@@ -112,7 +114,7 @@ func LoadEnv() error {
 	EnableStatic, _ = strconv.ParseBool(os.Getenv(EnvEnableStatic))
 	EnableJS, _ = strconv.ParseBool(os.Getenv(EnvEnableJS))
 
-	DSN = getEnv(EnvDSN, DefaultDSN)
+	DSN = utils.Getenv(EnvDSN, DefaultDSN)
 	os.Unsetenv(EnvDSN)
 	return nil
 }

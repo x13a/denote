@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi"
 
 	"github.com/x13a/denote/api/db"
+	"github.com/x13a/denote/utils"
 )
 
 const (
@@ -24,15 +25,14 @@ func AddHandler(m *chi.Mux) {
 	if err != nil || !enable {
 		return
 	}
-	path := os.Getenv(EnvPath)
-	if path == "" {
-		path = DefaultPath
-	}
-	m.Get(path, func(w http.ResponseWriter, r *http.Request) {
-		if err := db.Ping(r.Context()); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		io.WriteString(w, "OK")
-	})
+	m.Get(
+		utils.Getenv(EnvPath, DefaultPath),
+		func(w http.ResponseWriter, r *http.Request) {
+			if err := db.Ping(r.Context()); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			io.WriteString(w, "OK")
+		},
+	)
 }

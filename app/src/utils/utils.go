@@ -1,8 +1,8 @@
-package config
+package utils
 
 import "os"
 
-func getEnv(key, defval string) string {
+func Getenv(key, defval string) string {
 	if v := os.Getenv(key); v != "" {
 		return v
 	}
