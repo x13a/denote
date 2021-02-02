@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	Version = "0.2.6"
+	Version = "0.2.7"
 
 	cleanerInterval = 24 * time.Hour
 	maxHeaderBytes  = 1 << 10
@@ -34,6 +34,7 @@ func addHandlers(m *chi.Mux) {
 			r.Get("/get/{key}", static.Get)
 			r.Get("/rm/{key}", static.Delete)
 			r.Get("/static/{name}", static.Static)
+			r.Get("/.well-known/{name}", static.WellKnown)
 		}
 		r.Route(apiPath, func(r chi.Router) {
 			r.Post("/", api.SetHandler)

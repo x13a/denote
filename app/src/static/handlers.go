@@ -90,3 +90,13 @@ func Static(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-cache, private")
 	serveFile(w, r, name)
 }
+
+func WellKnown(w http.ResponseWriter, r *http.Request) {
+	switch chi.URLParam(r, "name") {
+	case "security.txt":
+		w.Header().Set("Content-Type", "text/plain; charset=UTF-8")
+		serveFile(w, r, filepath.Join("static", "security.txt"))
+	default:
+		http.NotFound(w, r)
+	}
+}
