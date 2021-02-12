@@ -33,10 +33,12 @@ func getOpts() {
 func main() {
 	getOpts()
 	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	go func() {
 		defer cancel()
 		sigChan := make(chan os.Signal, 1)
 		signal.Notify(sigChan, os.Interrupt)
+		defer signal.Stop(sigChan)
 		<-sigChan
 	}()
 	log.Printf("Listen on: %q\n", config.Addr)
