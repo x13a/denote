@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	Version = "0.2.7"
+	Version = "0.2.8"
 
 	cleanerInterval = 24 * time.Hour
 	maxHeaderBytes  = 1 << 10

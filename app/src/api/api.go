@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"crypto/rand"
 	"encoding/base64"
 	"errors"
 	"net/http"
@@ -10,11 +11,10 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
+	"github.com/x13a/go-crypt"
 
-	"github.com/x13a/denote/api/crypto"
 	"github.com/x13a/denote/api/db"
 	"github.com/x13a/denote/config"
-	"github.com/x13a/denote/utils"
 )
 
 const (
@@ -22,8 +22,9 @@ const (
 	minDurationLimit     = 1 * time.Minute
 	maxDurationLimit     = 7 * defaultDurationLimit
 
-	keyLen   = 1 << 4
-	totalLen = keyLen + crypto.PasswordLen
+	keyLen      = 1 << 4
+	passwordLen = 1 << 4
+	totalLen    = keyLen + passwordLen
 )
 
 var (
@@ -50,7 +51,7 @@ func Get(w http.ResponseWriter, r *http.Request) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	value, err = crypto.Decrypt(password, data)
+	value, err = crypt.DecryptGCM(password, data)
 	if err != nil {
 		return nil, err
 	}
@@ -68,8 +69,8 @@ func Set(w http.ResponseWriter, r *http.Request) (string, string, error) {
 	if value == "" {
 		return "", "", ErrEmptyValue
 	}
-	password, err := utils.RandRead(crypto.PasswordLen)
-	if err != nil {
+	password := make([]byte, passwordLen)
+	if _, err := rand.Read(password); err != nil {
 		return "", "", err
 	}
 	viewLimit, err := strconv.Atoi(r.PostFormValue("view_limit"))
@@ -84,7 +85,7 @@ func Set(w http.ResponseWriter, r *http.Request) (string, string, error) {
 	} else if durationLimit > maxDurationLimit {
 		durationLimit = maxDurationLimit
 	}
-	data, err := crypto.Encrypt(password, []byte(value))
+	data, err := crypt.EncryptGCM(password, []byte(value))
 	if err != nil {
 		return "", "", err
 	}
