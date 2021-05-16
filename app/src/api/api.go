@@ -11,8 +11,8 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
-	"github.com/x13a/go-crypt"
 
+	"github.com/x13a/denote/api/crypt"
 	"github.com/x13a/denote/api/db"
 	"github.com/x13a/denote/config"
 )
