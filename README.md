@@ -2,8 +2,7 @@
 
 Self-destructive (one-time) notes.
 
-Use POST form to set note and GET to get it. Sqlite3 for backend. Key 
-derivation via Argon2id, note encryption with AES-GCM.
+Use POST form to set note and GET to get it. Sqlite for backend, note encryption with AES-GCM.
 
 ## Schema
 
