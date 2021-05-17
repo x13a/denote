@@ -23,7 +23,7 @@ const (
 	maxDurationLimit     = 7 * defaultDurationLimit
 
 	keyLen      = 1 << 4
-	passwordLen = 1 << 4
+	passwordLen = 1 << 5
 	totalLen    = keyLen + passwordLen
 )
 
